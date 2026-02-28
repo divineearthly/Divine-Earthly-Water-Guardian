@@ -1,0 +1,9 @@
+earthengine-api
+geemap
+networkx
+fpdf
+pandas
+matplotlib
+requests
+ipyleaflet
+ipywidgets
