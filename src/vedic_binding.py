@@ -21,6 +21,7 @@ class QuantumInspiredBridge:
 
     def _setup_interface(self):
         """Map argument and return types for C++ functions."""
+        # Normalization functions
         self.lib.normalizepH.argtypes = [ctypes.c_double]
         self.lib.normalizepH.restype = ctypes.c_double
 
@@ -30,8 +31,13 @@ class QuantumInspiredBridge:
         self.lib.normalizeTDS.argtypes = [ctypes.c_double]
         self.lib.normalizeTDS.restype = ctypes.c_double
 
+        # Health Field calculation
         self.lib.calculate_unified_health_field.argtypes = [ctypes.c_double]
         self.lib.calculate_unified_health_field.restype = ctypes.c_double
+
+        # Silchar Safety Check (New Function)
+        self.lib.check_silchar_safety.argtypes = [ctypes.c_double, ctypes.c_double, ctypes.c_double]
+        self.lib.check_silchar_safety.restype = ctypes.c_double
 
     def run_prediction(self, ph, turb, tds):
         """Helper to run normalization batch."""
@@ -42,3 +48,7 @@ class QuantumInspiredBridge:
                 'TDS': self.lib.normalizeTDS(tds)
             }
         }
+
+    def run_silchar_check(self, ph, turb, tds):
+        """Calls the specialized Silchar safety check from the C++ kernel."""
+        return self.lib.check_silchar_safety(ph, turb, tds)
