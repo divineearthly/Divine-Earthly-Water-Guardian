@@ -1,27 +1,44 @@
 import ctypes
+import os
 
-class VedicKernelBinding:
-    def __init__(self, library_path):
-        self.library = ctypes.CDLL(library_path)
+class QuantumInspiredBridge:
+    def __init__(self, lib_path=None):
+        """
+        Initialize the bridge to the Vedic C++ Kernel.
+        Defaults to the reorganized 'kernels' directory.
+        """
+        if lib_path is None:
+            base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+            self.lib_path = os.path.join(base_path, 'kernels', 'libvedic.so')
+        else:
+            self.lib_path = lib_path
 
-    def calculate_unified_health_field(self, *args):
-        # Example of ctypes call (adjust argument types and return types accordingly)
-        self.library.calculate_unified_health_field.argtypes = (ctypes.c_double,) * len(args)
-        self.library.calculate_unified_health_field.restype = ctypes.c_double
-        return self.library.calculate_unified_health_field(*args)
+        if not os.path.exists(self.lib_path):
+            raise FileNotFoundError(f"Vedic Shared Library not found at {self.lib_path}")
 
-    def calculate_prana_index(self, *args):
-        self.library.calculate_prana_index.argtypes = (ctypes.c_double,) * len(args)
-        self.library.calculate_prana_index.restype = ctypes.c_double
-        return self.library.calculate_prana_index(*args)
+        self.lib = ctypes.CDLL(self.lib_path)
+        self._setup_interface()
 
-    def calculate_risk_index(self, *args):
-        self.library.calculate_risk_index.argtypes = (ctypes.c_double,) * len(args)
-        self.library.calculate_risk_index.restype = ctypes.c_double
-        return self.library.calculate_risk_index(*args)
+    def _setup_interface(self):
+        """Map argument and return types for C++ functions."""
+        self.lib.normalizepH.argtypes = [ctypes.c_double]
+        self.lib.normalizepH.restype = ctypes.c_double
 
-    def process_sensor_batch(self, sensor_data):
-        self.library.process_sensor_batch.argtypes = (ctypes.POINTER(ctypes.c_double), ctypes.c_size_t)
-        # Assuming sensor_data is a list of doubles
-        array_type = (ctypes.c_double * len(sensor_data))(*sensor_data)
-        self.library.process_sensor_batch(array_type, len(sensor_data))
+        self.lib.normalizeTurbidity.argtypes = [ctypes.c_double]
+        self.lib.normalizeTurbidity.restype = ctypes.c_double
+
+        self.lib.normalizeTDS.argtypes = [ctypes.c_double]
+        self.lib.normalizeTDS.restype = ctypes.c_double
+
+        self.lib.calculate_unified_health_field.argtypes = [ctypes.c_double]
+        self.lib.calculate_unified_health_field.restype = ctypes.c_double
+
+    def run_prediction(self, ph, turb, tds):
+        """Helper to run normalization batch."""
+        return {
+            'normalized': {
+                'pH': self.lib.normalizepH(ph),
+                'Turbidity': self.lib.normalizeTurbidity(turb),
+                'TDS': self.lib.normalizeTDS(tds)
+            }
+        }
